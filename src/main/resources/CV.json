@@ -1,0 +1,22 @@
+{
+  "firstname" : "Ivanov",
+  "middlename" : "Ivan",
+  "lastname" : "Ivanovich",
+  "dateOfBirth" : "25.05.1980",
+  "phone" : "123123123",
+  "languages" : [
+    {
+      "lang" : "en",
+      "knowledge" : "proficient"
+    },
+    {
+      "lang" : "ru",
+      "knowledge" : "advanced"
+    }
+  ],
+  "skills" : [
+    "Java",
+    "JavaScript",
+    "C++"
+  ]
+}
