@@ -1,21 +1,23 @@
 import org.apache.log4j.Logger;
 
 import javax.swing.*;
-import javax.swing.text.*;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
 import java.io.File;
-import java.io.FileReader;
+
 import java.io.FileWriter;
 import java.io.IOException;
-import java.util.Arrays;
 
+//todo
 public class MainView extends JFrame implements ActionListener {
 
     private static final Logger log = Logger.getLogger(MainView.class);
     private final JEditorPane area = new JEditorPane("text/html", "");
+    private final JEditorPane aboutAreaPane = new JEditorPane("text/html", "");
     private JTextField firstName;
     private JTextField middleName;
     private JTextField lastName;
@@ -118,10 +120,44 @@ public class MainView extends JFrame implements ActionListener {
                 scrollPane.getBorder()
         ));
         JTabbedPane tabbedPane = new JTabbedPane();
+
         JPanel persPanel = new JPanel(new BorderLayout());
         persPanel.add(controlPane, BorderLayout.PAGE_START);
         persPanel.add(scrollPane, BorderLayout.CENTER);
         tabbedPane.add("Personal info",persPanel);
+
+        JPanel aboutPanel = new JPanel();
+        aboutArea = new JTextArea();
+        aboutArea.setFont(new Font("Courier New", Font.ITALIC, 14));
+
+        aboutPanel.setLayout(new BoxLayout(aboutPanel, BoxLayout.PAGE_AXIS));
+        aboutAreaPane.setEditable(false);
+        aboutAreaPane.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createTitledBorder("Vitae"),
+                BorderFactory.createEmptyBorder())
+        );
+        JButton setAboutButton = new JButton("Set");
+        setAboutButton.setActionCommand("setAboutButton");
+        setAboutButton.addActionListener(this);
+        JButton clearAboutButton = new JButton("Clear");
+        clearAboutButton.setActionCommand("clearAboutButton");
+        clearAboutButton.addActionListener(this);
+
+        JPanel buttonsPanel = new JPanel();
+        buttonsPanel.setLayout(new BoxLayout(buttonsPanel, BoxLayout.X_AXIS));
+        buttonsPanel.add(setAboutButton);
+        buttonsPanel.add(clearAboutButton);
+        aboutPanel.add(new JScrollPane(aboutArea), BorderLayout.PAGE_START);
+        aboutPanel.add(buttonsPanel);
+        aboutPanel.add(new JScrollPane(aboutAreaPane) ,BorderLayout.PAGE_END);
+
+        tabbedPane.add("About", aboutPanel);
+        tabbedPane.addChangeListener(new ChangeListener() {
+            @Override
+            public void stateChanged(ChangeEvent e) {
+                aboutAreaPane.setText(area.getText());
+            }
+        });
         add(tabbedPane);
 
         JMenuBar menuBar = new JMenuBar();
@@ -183,6 +219,14 @@ public class MainView extends JFrame implements ActionListener {
 
     @Override
     public void actionPerformed(ActionEvent e) {
+        if(e.getActionCommand().equals("setAboutButton")){
+            area.setText(formatCV(false));
+            aboutAreaPane.setText(formatCV(false));
+        }
+        if(e.getActionCommand().equals("clearAboutButton")){
+            area.setText(area.getText().replaceAll(aboutArea.getText(), ""));
+            aboutAreaPane.setText(area.getText().replaceAll(aboutArea.getText(), ""));
+        }
         if(e.getActionCommand().equals("setButton")){
             area.setText(formatCV(false));
         }
@@ -193,6 +237,10 @@ public class MainView extends JFrame implements ActionListener {
             int val = fileChooser.showOpenDialog(MainView.this);
             if(val == JFileChooser.APPROVE_OPTION){
                 file = fileChooser.getSelectedFile();
+                if(!file.getName().endsWith(".json")) {
+                    JOptionPane.showMessageDialog(null, "Choose json file");
+                    return;
+                }
                 area.setText(readFromFile(file));
                 log.info("Opening: " + file.getName());
             }
@@ -202,6 +250,7 @@ public class MainView extends JFrame implements ActionListener {
             int val = fileChooser.showSaveDialog(MainView.this);
             if(val == JFileChooser.APPROVE_OPTION){
                 try(FileWriter fw = new FileWriter(fileChooser.getSelectedFile() + ".txt")){
+                    //todo save to json file
                     fw.write(area.getText());
                 } catch (IOException e1) {
                     log.error("IOException in MainWindow: " + e1);
@@ -220,6 +269,7 @@ public class MainView extends JFrame implements ActionListener {
         StringBuilder cvText = new StringBuilder();
         String languages = "";
         String skills = "";
+        String about = "";
         if(f){
             firstName = parser.getFirstName();
             middleName = parser.getMiddleName();
@@ -233,13 +283,17 @@ public class MainView extends JFrame implements ActionListener {
             middleName = this.middleName.getText();
             lastName = this.lastName.getText();
             phone = this.phone.getText();
+            dateOfBirth = this.dateOfBirth.getText();
+            languages = this.languages.getText();
+            skills = this.languages.getText();
+            about = this.aboutArea.getText();
         }
         cvText.append("<h1 align=\"center\"><b>" + firstName + " " + middleName + " " + lastName + "</b></h1>" );
         cvText.append("<b>Birth day: </b>" + dateOfBirth);
         cvText.append("<br><b>Phone: </b></br>" + phone);
         cvText.append("<br><b>Languages: </b></br>" + languages);
         cvText.append("<br><b>Skills: </b></br>" + skills);
-
+        cvText.append("<br><b>About: </b></br>" + about);
 
 
         return cvText.toString();
